@@ -2312,9 +2312,6 @@ define([
                     $('<a href="#repository" data-toggle="tab" class="repository_tab_link"></a>')
                         .append("Notebook Library ")
                         .append('<span class="badge repo-notifications" title="New Sharing Invites"></span>')
-                        .click(function() {
-                            window.location.hash = 'repository';
-                        })
                 )
         );
 
