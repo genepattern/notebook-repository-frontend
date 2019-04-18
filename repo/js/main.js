@@ -322,30 +322,8 @@ define([
         modal_loading_screen();
 
         const preview_url = GenePattern.repo.repo_url + "/notebooks/" + notebook['id'] + "/preview/";
-        $("<img />")
-            .attr("src", preview_url)
-            .css("display", "none")
-            .on("load", function() {
-                // Close the modal
-                close_modal();
-
-                // Forward the user to the preview
-                window.open(preview_url);
-            })
-            .on("error", function() {
-                // Close the modal
-                close_modal();
-
-                // Show error dialog
-                console.log("ERROR: Failed to generate notebook preview");
-                dialog.modal({
-                    title : "Unable to Generate Preview",
-                    body : $("<div></div>")
-                        .addClass("alert alert-danger")
-                        .append("The GenePattern Notebook Repository encountered an error attempting to generate the notebook preview."),
-                    buttons: {"OK": function() {}}
-                });
-            });
+        window.open(preview_url);
+        close_modal();
     }
 
     /**
