@@ -2033,7 +2033,7 @@ define([
             }
             else {
                 // Filter the table by this tag
-                const search_box = $("#repository-list").find("input[type=search]");
+                const search_box = $("#repository-search").find("input[type=search]");
                 search_box.val(tag);
                 search_box.keyup();
             }
