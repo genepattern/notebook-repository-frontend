@@ -1944,6 +1944,9 @@ define([
         const pinned_tags = get_pinned_tags();
         const nav = $("#repo-sidebar-nav");
 
+        // Remember which nav was selected
+        const remembered = nav.parent().find("li.active").text();
+
         // Empty the sidebar when refreshing the list
         nav.empty();
 
@@ -1961,8 +1964,10 @@ define([
         // Add the My Notebooks tag
         nav.append(create_sidebar_nav('-my-notebooks', 'my notebooks'));
 
-        // Select the first nav
-        select_sidebar_nav(nav.find("a:first"));
+        // Select the remembered nav, select first if not found
+        let to_select = nav.parent().find(`li:contains('${remembered}')`);
+        if (!to_select.length || !remembered) to_select = nav.find("li:first");
+        select_sidebar_nav(to_select.find('a'));
     }
 
     /**
