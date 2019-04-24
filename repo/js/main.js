@@ -2663,6 +2663,37 @@ define([
         });
     }
 
+    function add_move_warning(nb) {
+        // Get the path and notebook object, depending on whether one has been provided as an argument
+        const nb_path = nb ? nb.api_path : get_selected_path();
+        const published = is_nb_published(nb_path);
+        const shared = !!get_shared_notebook(nb_path);
+
+        // If not a publoished or shared notebook, do nothing
+        if (!published && !shared) return;
+
+        // Add the warning message
+        setTimeout(function() {
+            $(".modal-body").prepend(
+                $("<div></div>")
+                    .addClass("alert alert-danger")
+                    .text("You are about to move or rename a shared notebook. Doing this may cause problems accessing the notebook from the Notebook Library.")
+            );
+        }, 200);
+    }
+
+    function rename_in_nb_warning() {
+        // Get the notebook if public or shared
+        let notebook = get_published('/notebooks/' + encodeURI(Jupyter.notebook.notebook_path));
+        notebook = !!notebook ? notebook : get_shared_notebook('/notebooks/' + encodeURI(Jupyter.notebook.notebook_path));
+
+        // If not public or shared, do nothing
+        if (!notebook) return;
+
+        // Add the warning
+        add_move_warning(notebook);
+    }
+
     function tree_init() {
         // Mark repo events as initialized
         GenePattern.repo.events_init = true;
@@ -2687,6 +2718,10 @@ define([
                     .hide()
             );
         $(document).click($.proxy(selection_changed, this));
+
+        // Add warning to move and rename dialogs
+        $('.rename-button').click(() => add_move_warning());
+        $('.move-button').click(() => add_move_warning());
 
         // Initialize repo search
         init_repo_tab();
@@ -2738,6 +2773,9 @@ define([
                 get_notebooks(function() {
                     // Add publish link to the toolbar
                     add_publish_link();
+
+                    // Add the rename warning
+                    $("#notebook_name").click(() => rename_in_nb_warning());
                 });
                 get_sharing_list(function() {
                     // Update the shared canonical copy upon save
