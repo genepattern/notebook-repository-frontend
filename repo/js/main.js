@@ -2684,7 +2684,7 @@ define([
 
     function rename_in_nb_warning() {
         // Get the notebook if public or shared
-        let notebook = get_published('/notebooks/' + encodeURI(Jupyter.notebook.notebook_path));
+        let notebook = get_published(Jupyter.notebook.base_url + 'notebooks/' + encodeURI(Jupyter.notebook.notebook_path));
         notebook = !!notebook ? notebook : get_shared_notebook('/notebooks/' + encodeURI(Jupyter.notebook.notebook_path));
 
         // If not public or shared, do nothing
