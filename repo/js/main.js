@@ -2638,7 +2638,8 @@ define([
             title : "Notebook Comments",
             body : $("<section></section>")
                 .attr("id", "comment-thread"),
-            buttons: {"OK": function() {}}
+            buttons: {"OK": function() {}},
+            keyboard_manager: Jupyter.keyboard_manager
         });
 
         // Load the comment thread
