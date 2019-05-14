@@ -699,7 +699,7 @@ define([
                     .append($("<br/>"))
                     .append(notebook['api_path'].replace(/^.*[\\\/]/, ''))
                     .append($("<br/>"))
-                    .append(get_shared_owner(notebook))
+                    .append(decode_username(get_shared_owner(notebook)))
                     .append($("<br/>"))
                     .append(notebook['last_updated'])
             )
@@ -715,6 +715,10 @@ define([
             body : body,
             buttons: buttons
         });
+    }
+
+    function decode_username(username) {
+        return decodeURIComponent(username.replace(/-/g, '%'));
     }
 
     function get_shared_notebook(id_or_path) {
@@ -1601,7 +1605,7 @@ define([
                     .append($("<br/>"))
                     .append(notebook['file_path'].replace(/^.*[\\\/]/, ''))
                     .append($("<br/>"))
-                    .append(notebook['owner'])
+                    .append(decode_username(notebook['owner']))
                     .append($("<br/>"))
                     .append(notebook['publication'])
             )
