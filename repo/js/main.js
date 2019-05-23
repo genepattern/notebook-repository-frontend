@@ -2305,7 +2305,7 @@ define([
         // Add the contents of the public notebooks tab
         $("#tab_content").find(".tab-content")
             .append(
-                $('<div id="repository" class="tab-pane"></div>')
+                $('<div id="repository" class="tab-pane row"></div>')
                     .append(
                         $("<div id='repo-sidebar' class='col-md-2'></div>")
                             .append($("<h4>Public Notebooks</h4>"))
