@@ -1776,8 +1776,8 @@ define([
             // If tag is -my-notebooks, return public notebooks you own
             if (tag === '-my-notebooks' && is_owner(nb)) built_list.push([nb.id, nb.name, nb.description, nb.author, nb.publication, nb.quality, tags]);
 
-            // If -community, return all notebooks without a pinned tag
-            else if (tag === '-community' && no_pinned_tags(tags)) built_list.push([nb.id, nb.name, nb.description, nb.author, nb.publication, nb.quality, tags]);
+            // If -prerelease, return all notebooks without a pinned tag
+            else if (tag === '-prerelease' && no_pinned_tags(tags)) built_list.push([nb.id, nb.name, nb.description, nb.author, nb.publication, nb.quality, tags]);
 
             // If -all, return all
             else if (tag === '-all') built_list.push([nb.id, nb.name, nb.description, nb.author, nb.publication, nb.quality, tags]);
@@ -1962,8 +1962,8 @@ define([
             nav.append(create_sidebar_nav(tag, tag));
         });
 
-        // Add the community tag
-        nav.append(create_sidebar_nav('-community', 'community'));
+        // Add the prerelease tag
+        nav.append(create_sidebar_nav('-prerelease', 'prerelease'));
 
         // Add the My Notebooks tag
         nav.append(create_sidebar_nav('-my-notebooks', 'my notebooks'));
