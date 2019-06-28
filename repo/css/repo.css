@@ -94,19 +94,19 @@
     padding-left: 13px;
 }
 
-#repository .repo-notifications {
+.repository .repo-notifications {
     float: right;
 }
 
-#repo-header-notebooks {
+.repo-header-label, .repo-header-notebooks {
     line-height: 29px;
 }
 
-#repository-list > .dataTables_wrapper > .dataTables_filter {
+.repository-list > .dataTables_wrapper > .dataTables_filter {
     display: none;
 }
 
-#repository-search {
+.repository-search {
     float: right;
     font-weight: normal;
     margin-right: 10px;
@@ -114,7 +114,7 @@
     border-bottom: none;
 }
 
-#repo-header-label {
+.repo-header-label {
     text-transform: capitalize;
 }
 
@@ -122,11 +122,11 @@
     font-weight: bold;
 }
 
-#repo-sidebar {
+.repo-sidebar {
     padding: 5px;
 }
 
-#repo-sidebar-nav > li, #repo-sidebar-shared > li {
+.repo-sidebar-nav > li, .repo-sidebar-shared > li {
     width: 100%;
     text-transform: capitalize;
 }
@@ -160,19 +160,19 @@ input.repo-input:invalid, select.repo-input:invalid {
   border: 1px solid red;
 }
 
-#repository {
+.repository {
     margin-top: 10px;
 }
 
-#repository-list {
+.repository-list {
     padding: 10px;
 }
 
-#repository-list table {
+.repository-list table {
     width: 100% !important;
 }
 
-#repository-list tbody {
+.repository-list tbody {
     cursor: pointer;
 }
 
@@ -208,7 +208,7 @@ input.repo-input:invalid, select.repo-input:invalid {
     color: #a94442;
 }
 
-#repo-sidebar-nav.nav-pills > li + li {
+.repo-sidebar-nav.nav-pills > li + li {
     margin-left: 0;
 }
 

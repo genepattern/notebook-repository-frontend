@@ -225,7 +225,7 @@ define([
         GenePattern.repo.my_nb_paths = [];
 
         // Clean the UI
-        $("#repository").find(".list_item").remove();
+        $(".repository .list_item").remove();
         $("#notebook_list").find(".repo-publish-icon").remove();
     }
 
@@ -807,9 +807,11 @@ define([
         return rows;
     }
 
-    function build_sharing_table(notebooks, shared_by_me) {
+    function build_sharing_table(tab, notebooks, shared_by_me) {
+        const tab_node = $(`#${tab}`);
+
         // Create the table
-        const list_div = $("#repository-list");
+        const list_div = tab_node.find(".repository-list");
 
         const table = $("<table></table>")
             .addClass("table table-striped table-bordered table-hover")
@@ -1767,11 +1769,24 @@ define([
      * Transforms the JSON notebooks object into a list of lists,
      * to be consumed by data tables
      */
-    function public_notebook_list(tag) {
+    function public_notebook_list(tag, must_include_tags=[], cannot_include_tags=[]) {
         const built_list = [];
 
         GenePattern.repo.public_notebooks.forEach(function(nb) {
             const tags = build_tag_list(nb);
+
+            // Return if a required tag isn't included
+            let should_return = false;
+            must_include_tags.forEach(function(tag) {
+                if (!tags.includes(tag)) should_return = true;
+            });
+            if (should_return) return true;
+
+            // Return if a forbidden tag is included
+            cannot_include_tags.forEach(function(tag) {
+                if (tags.includes(tag)) should_return = true;
+            });
+            if (should_return) return true;
 
             // If tag is -my-notebooks, return public notebooks you own
             if (tag === '-my-notebooks' && is_owner(nb)) built_list.push([nb.id, nb.name, nb.description, nb.author, nb.publication, nb.quality, tags]);
@@ -1796,7 +1811,7 @@ define([
      * @returns {boolean}
      */
     function no_pinned_tags(tags) {
-        const pinned_tags = new Set(get_pinned_tags());
+        const pinned_tags = new Set(get_pinned_tags('workshops').concat(get_pinned_tags('repository')));
         let intersection = new Set([...tags].filter(x => pinned_tags.has(x)));
         return intersection.size === 0;
     }
@@ -1820,9 +1835,37 @@ define([
     /**
      * Builds the repository tab
      */
-    function build_repo_tab() {
+    function build_repo_tab(tab, must_include_tags, cannot_include_tags) {
         // Add Notebook Sidebar
-        build_notebook_sidebar();
+        const tab_node = $(`#${tab}`);
+
+        const pinned_tags = get_pinned_tags(tab, must_include_tags, cannot_include_tags);
+        const nav = tab_node.find(".repo-sidebar-nav");
+
+        // Remember which nav was selected
+        const remembered = nav.parent().find("li.active").text();
+
+        // Empty the sidebar when refreshing the list
+        nav.empty();
+
+        // Add the all notebooks tag
+        nav.append(create_sidebar_nav(tab, '-all', 'all notebooks', must_include_tags, cannot_include_tags));
+
+        // For each pinned tag, add to the sidebar
+        pinned_tags.forEach(function(tag) {
+            nav.append(create_sidebar_nav(tab, tag, tag, must_include_tags, cannot_include_tags));
+        });
+
+        // Add the prerelease tag
+        nav.append(create_sidebar_nav(tab, '-prerelease', 'prerelease', must_include_tags, cannot_include_tags));
+
+        // Add the My Notebooks tag
+        nav.append(create_sidebar_nav(tab, '-my-notebooks', 'my notebooks', must_include_tags, cannot_include_tags));
+
+        // Select the remembered nav, select first if not found
+        let to_select = nav.parent().find(`li:contains('${remembered}')`);
+        if (!to_select.length || !remembered) to_select = nav.find("li:first");
+        select_sidebar_nav(tab, to_select.find('a'), must_include_tags, cannot_include_tags);
     }
 
     function get_protected_tags() {
@@ -1848,14 +1891,35 @@ define([
         return protected_tags;
     }
 
-    function get_pinned_tags() {
+    function get_pinned_tags(tab_name, must_include_tags=[], cannot_include_tags=[]) {
         // If already cached, return the list
-        if (GenePattern.repo.pinned_tags) return GenePattern.repo.pinned_tags;
+        if (GenePattern.repo.pinned_tags && GenePattern.repo.pinned_tags[tab_name]) {
+            return GenePattern.repo.pinned_tags[tab_name];
+        }
 
         // Otherwise, generate the list
         const pinned_tags = [];
         GenePattern.repo.public_notebooks.forEach(function(nb) {
             if (nb.tags) {
+                // Assemble all tags in a list
+                const nb_tags = [];
+                nb.tags.forEach(function(tag) {
+                    nb_tags.push(tag.label);
+                });
+
+                // If notebook doesn't have required tag, return
+                let should_return = false;
+                must_include_tags.forEach(function(tag) {
+                    if (!nb_tags.includes(tag)) should_return = true;
+                });
+                if (should_return) return true;
+
+                // If notebook has forbidden tag, return
+                cannot_include_tags.forEach(function(tag) {
+                    if (nb_tags.includes(tag)) should_return = true;
+                });
+                if (should_return) return true;
+
                 nb.tags.forEach(function(tag) {
                     // If the tag is pinned and not already in the list
                     if (tag.pinned && !pinned_tags.includes(tag.label)) {
@@ -1867,7 +1931,8 @@ define([
         pinned_tags.sort();
 
         // Set the cache and return
-        GenePattern.repo.pinned_tags = pinned_tags;
+        if (!GenePattern.repo.pinned_tags) GenePattern.repo.pinned_tags = {};
+        GenePattern.repo.pinned_tags[tab_name] = pinned_tags;
         return pinned_tags;
     }
 
@@ -1890,26 +1955,28 @@ define([
         return tag_models[tag_label];
     }
 
-    function select_sidebar_nav(link) {
+    function select_sidebar_nav(tab, link, must_include_tags=[], cannot_include_tags=[]) {
+        const tab_node = $(`#${tab}`);
+
         // Remove the old active class
-        const nav = $("#repo-sidebar");
+        const nav = tab_node.find(".repo-sidebar");
         nav.find("li").removeClass("active");
 
         // Add the new active class
         link.parent().addClass("active");
 
         // Clear the search box, unless all notebooks
-        if (!link.hasClass('repo-all-notebooks')) $("#repository-search > input").val('');
+        if (!link.hasClass('repo-all-notebooks')) tab_node.find(".repository-search > input").val('');
 
         // Set the header label
-        $("#repo-header-label").html(link.html());
+        tab_node.find(".repo-header-label").html(link.html());
 
         // Remove the old notebook table
-        $("#repository-list").empty();
+        tab_node.find(".repository-list").empty();
 
         // Get the data tag
         const tag = link.attr("data-tag");
-        const nb_header = $("#repo-header-notebooks");
+        const nb_header = tab_node.find(".repo-header-notebooks");
 
         // If shared notebook
         if (tag.startsWith('-shared-')) {
@@ -1917,18 +1984,19 @@ define([
 
             const mine = tag === '-shared-by-me';
             const shared_nb_matrix = shared_notebook_matrix(mine);
-            build_sharing_table(shared_nb_matrix, mine);
+            build_sharing_table(tab, shared_nb_matrix, mine);
         }
 
         // If public notebook
         else {
-            nb_header.show();
-            const filtered_notebook_list = public_notebook_list(link.attr("data-tag"));
-            build_notebook_table(filtered_notebook_list);
+            if (tag === '-all' || tag.endsWith('notebooks')) nb_header.hide();
+            else nb_header.show();
+            const filtered_notebook_list = public_notebook_list(link.attr("data-tag"), must_include_tags, cannot_include_tags);
+            build_notebook_table(tab, filtered_notebook_list);
         }
     }
 
-    function create_sidebar_nav(tag, label) {
+    function create_sidebar_nav(tab, tag, label, must_include_tags=[], cannot_include_tags=[]) {
         const li = $('<li role="presentation"></li>');
         const link = $('<a href="#" data-tag="' + tag + '">' + label + '</a>');
         if (tag === '-shared-with-me') link.append($('<span class="badge repo-notifications" title="New Sharing Invites"></span>'));
@@ -1936,42 +2004,12 @@ define([
 
         // Attach the click event
         link.click(function() {
-            select_sidebar_nav(link);
+            select_sidebar_nav(tab, link, must_include_tags, cannot_include_tags);
         });
 
         // Assemble the elements and return
         li.append(link);
         return li;
-    }
-
-    function build_notebook_sidebar() {
-        const pinned_tags = get_pinned_tags();
-        const nav = $("#repo-sidebar-nav");
-
-        // Remember which nav was selected
-        const remembered = nav.parent().find("li.active").text();
-
-        // Empty the sidebar when refreshing the list
-        nav.empty();
-
-        // Add the all notebooks tag
-        nav.append(create_sidebar_nav('-all', 'all notebooks'));
-
-        // For each pinned tag, add to the sidebar
-        pinned_tags.forEach(function(tag) {
-            nav.append(create_sidebar_nav(tag, tag));
-        });
-
-        // Add the prerelease tag
-        nav.append(create_sidebar_nav('-prerelease', 'prerelease'));
-
-        // Add the My Notebooks tag
-        nav.append(create_sidebar_nav('-my-notebooks', 'my notebooks'));
-
-        // Select the remembered nav, select first if not found
-        let to_select = nav.parent().find(`li:contains('${remembered}')`);
-        if (!to_select.length || !remembered) to_select = nav.find("li:first");
-        select_sidebar_nav(to_select.find('a'));
     }
 
     /**
@@ -1980,9 +2018,11 @@ define([
      * @param label
      * @param notebooks
      */
-    function build_notebook_table(notebooks) {
+    function build_notebook_table(tab, notebooks) {
+        const tab_node = $(`#${tab}`);
+
         // Create the table
-        const list_div = $("#repository-list");
+        const list_div = tab_node.find(".repository-list");
 
         const table = $("<table></table>")
             .addClass("table table-striped table-bordered table-hover")
@@ -2038,11 +2078,11 @@ define([
 
             // If admin, give choice to pin or protect tag
             if (GenePattern.repo.admin) {
-                admin_tag_dialog(tag);
+                admin_tag_dialog(tab, tag);
             }
             else {
                 // Filter the table by this tag
-                const search_box = $("#repository-search").find("input[type=search]");
+                const search_box = tab_node.find(".repository-search").find("input[type=search]");
                 search_box.val(tag);
                 search_box.keyup();
             }
@@ -2080,8 +2120,8 @@ define([
      *
      * @param tag
      */
-    function admin_tag_dialog(tag) {
-        const pinned_tags = get_pinned_tags();
+    function admin_tag_dialog(tab, tag) {
+        const pinned_tags = get_pinned_tags(tab);
         const protected_tags = get_protected_tags();
 
         let is_pinned = pinned_tags.includes(tag);
@@ -2135,7 +2175,7 @@ define([
      * Empty all notebook UI elements from the list
      */
     function empty_notebook_list() {
-        $("#repository-list").empty();
+        $(".repository-list").empty();
         GenePattern.repo.pinned_tags = null;
         GenePattern.repo.protected_tags = null;
         GenePattern.repo.tag_models = null;
@@ -2161,7 +2201,8 @@ define([
                 // If viewing the notebook index
                 if (Jupyter.notebook_list) {
                     empty_notebook_list(); // Empty the list of any existing state
-                    build_repo_tab(); // Populate the repository tab
+                    build_repo_tab('repository', [], ["workshop"]); // Populate the repository tab
+                    build_repo_tab('workshops', ["workshop"], []);
                 }
 
                 GenePattern.repo.last_refresh = new Date(); // Set the time of last refresh
@@ -2291,13 +2332,13 @@ define([
     /**
      * Initialize the repo tab and search box
      */
-    function init_repo_tab() {
+    function init_repo_tab(id, name) {
         // Create the public notebooks tab
         $("#tabs").append(
             $('<li></li>')
                 .append(
-                    $('<a href="#repository" data-toggle="tab" class="repository_tab_link"></a>')
-                        .append("Notebook Library ")
+                    $(`<a href="#${id}" data-toggle="tab" name="${id}" class="repository_tab_link"></a>`)
+                        .append(`${name} `)
                         .append('<span class="badge repo-notifications" title="New Sharing Invites"></span>')
                 )
         );
@@ -2305,58 +2346,67 @@ define([
         // Add the contents of the public notebooks tab
         $("#tab_content").find(".tab-content")
             .append(
-                $('<div id="repository" class="tab-pane row"></div>')
+                $(`<div id="${id}" class="repository tab-pane row"></div>`)
                     .append(
-                        $("<div id='repo-sidebar' class='col-md-2'></div>")
+                        $("<div class='repo-sidebar col-md-2'></div>")
                             .append($("<h4>Public Notebooks</h4>"))
-                            .append($("<ul id='repo-sidebar-nav' class='nav nav-pills'></ul>"))
+                            .append($("<ul class='repo-sidebar-nav nav nav-pills'></ul>"))
                             .append($("<h4>Shared Notebooks</h4>"))
-                            .append($("<ul id='repo-sidebar-shared' class='nav nav-pills'></ul>"))
+                            .append($("<ul class='repo-sidebar-shared nav nav-pills'></ul>"))
                     )
                     .append(
                         $('<div class="list_container col-md-10">')
                             .append(
-                                $('<div id="repository-search"></div>')
+                                $('<div class="repository-search"></div>')
                                     .append('Search: ')
                                     .append(
                                         $('<input />')
                                             .attr("type", "search")
                                             .keyup(function(event) {
+                                                const tab_node = $(`#${id}`);
+
                                                 // If all notebooks is not selected, select it
-                                                if (!is_all_nb_selected()) $(".repo-all-notebooks").click();
+                                                if (!is_all_nb_selected(id)) tab_node.find(".repo-all-notebooks").click();
 
                                                 const search_text = $(event.target).val();
-                                                const filter_input = $("#repository-list input[type=search]");
+                                                const filter_input = tab_node.find(".repository-list input[type=search]");
                                                 filter_input.val(search_text).keyup();
                                             })
                                     )
                             )
                             .append(
-                                $('<div id="repository-list-header" class="row list_header repo-header"></div>')
-                                    .append("<span id='repo-header-label'></span> <span id='repo-header-notebooks'>Notebooks</span>")
+                                $('<div class="repository-list-header row list_header repo-header"></div>')
+                                    .append("<span class='repo-header-label'></span> <span class='repo-header-notebooks'>Notebooks</span>")
                             )
                             .append(
-                                $('<div id="repository-list" class="row"></div>')
+                                $('<div class="repository-list row"></div>')
                             )
                     )
                     .ready(function() {
                         // Display the Public Notebooks tab, if selected
                         if (window.location.hash === "#repository") {
                             setTimeout(function() {
-                                $(".repository_tab_link").tab('show');
+                                $(".repository_tab_link[name=repository]").tab('show');
+                            }, 1);
+                        }
+                        else if (window.location.hash === "#workshops") {
+                            setTimeout(function() {
+                                $(".repository_tab_link[name=workshops]").tab('show');
                             }, 1);
                         }
                     })
             );
 
         // Attach the shared menu items
-        $("#repo-sidebar-shared")
-            .append(create_sidebar_nav("-shared-by-me", "Shared by Me"))
-            .append(create_sidebar_nav("-shared-with-me", "Shared with Me"));
+        const tab_node = $(`#${id}`);
+        tab_node.find(".repo-sidebar-shared")
+            .append(create_sidebar_nav(id, "-shared-by-me", "Shared by Me"))
+            .append(create_sidebar_nav(id, "-shared-with-me", "Shared with Me"));
     }
 
-    function is_all_nb_selected() {
-        return $(".repo-all-notebooks").parent().hasClass('active');
+    function is_all_nb_selected(tab) {
+        const tab_node = $(`#${tab}`);
+        return tab_node.find(".repo-all-notebooks").parent().hasClass('active');
     }
 
     function lock_notebook(user) {
@@ -2674,7 +2724,7 @@ define([
         const published = is_nb_published(nb_path);
         const shared = !!get_shared_notebook(nb_path);
 
-        // If not a publoished or shared notebook, do nothing
+        // If not a published or shared notebook, do nothing
         if (!published && !shared) return;
 
         // Add the warning message
@@ -2725,11 +2775,12 @@ define([
         $(document).click($.proxy(selection_changed, this));
 
         // Add warning to move and rename dialogs
-        $('.rename-button').click(() => add_move_warning());
-        $('.move-button').click(() => add_move_warning());
+        $('.rename-button').click(() => add_move_warning(null));
+        $('.move-button').click(() => add_move_warning(null));
 
-        // Initialize repo search
-        init_repo_tab();
+        // Initialize notebook library and workshop tabs
+        init_repo_tab("repository", "Notebook Library");
+        init_repo_tab("workshops", "Workshop Notebooks");
 
         // Authenticate and the list of public notebooks
         do_authentication(function () {
