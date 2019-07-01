@@ -840,7 +840,7 @@ define([
                 {"title":"Owner", "width": "100px"}
             ]
         });
-        dt.order([1, 'asc']).draw();
+        dt.order([4, 'desc']).draw();
 
         // Add event listener for notebook dialogs
         table.find("tbody").on('click', 'tr', function () {
@@ -2062,7 +2062,7 @@ define([
                 {"title":"Quality", "width": "100px"}
             ]
         });
-        dt.order([1, 'asc']).draw();
+        dt.order([4, 'desc']).draw();
 
         // Add event listener for notebook dialogs
         table.find("tbody").on('click', 'tr', function () {
