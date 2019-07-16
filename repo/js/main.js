@@ -230,15 +230,8 @@ define([
     }
 
     function forceHTTPS(url) {
-        // Ignore this directive if in development mode
-        if (url.startsWith("http://localhost")) return url;
-
-        if (!url.startsWith("https://")) {
-            return url.replace("http://", "https://")
-        }
-        else {
-            return url;
-        }
+        if (window.location.protocol === "https:") return url.replace("http://", "https://");
+        else return url;
     }
 
     function force_user_path(url) {
