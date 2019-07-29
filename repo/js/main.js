@@ -2273,6 +2273,16 @@ define([
         return username;
     }
 
+    function show_repo() {
+        $(".repository_tab_link").show();
+    }
+
+    function hide_repo() {
+        $(".publish-button, .share-button").remove();
+        $(".publish-option, .share-option").hide();
+        $(".repository_tab_link").hide();
+    }
+
     /**
      * Authenticate with the GPNB Repo
      *
@@ -2293,6 +2303,9 @@ define([
             },
             crossDomain: true,
             success: function(data) {
+                // Show the repo UI elements
+                show_repo();
+
                 // Set token and make callback
                 GenePattern.repo.token = data['token'];
                 GenePattern.repo.admin = data['admin'];
@@ -2303,6 +2316,9 @@ define([
             },
             error: function() {
                 console.log("ERROR: Could not authenticate with GenePattern Notebook Repository.");
+
+                // Hide repo UI elements
+                hide_repo();
             }
         });
     }
@@ -2331,6 +2347,7 @@ define([
             $('<li></li>')
                 .append(
                     $(`<a href="#${id}" data-toggle="tab" name="${id}" class="repository_tab_link"></a>`)
+                        .hide()
                         .append(`${name} `)
                         .append('<span class="badge repo-notifications" title="New Sharing Invites"></span>')
                 )
@@ -2546,7 +2563,7 @@ define([
         trust_notebook.before(
             $("<li></li>")
                 .append(
-                    $("<a href='#' target='_blank'>Publish to Repository</a>")
+                    $("<a href='#' class='publish-option' target='_blank'>Publish to Repository</a>")
                         .click(function() {
                             validate_notebook();
                             return false;
@@ -2556,7 +2573,7 @@ define([
         trust_notebook.before(
             $("<li></li>")
                 .append(
-                    $("<a href='#' target='_blank'>Share with Collaborators</a>")
+                    $("<a href='#' class='share-option' target='_blank'>Share with Collaborators</a>")
                         .click(function() {
                             share_selected();
                             return false;
