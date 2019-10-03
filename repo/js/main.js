@@ -1846,7 +1846,8 @@ define([
 
         // For each pinned tag, add to the sidebar
         pinned_tags.forEach(function(tag) {
-            nav.append(create_sidebar_nav(tab, tag, tag, must_include_tags, cannot_include_tags));
+            const tag_model = get_tag_model(tag);
+            nav.append(create_sidebar_nav(tab, tag_model, tag, must_include_tags, cannot_include_tags));
         });
 
         // Add the prerelease tag
@@ -1990,10 +1991,13 @@ define([
     }
 
     function create_sidebar_nav(tab, tag, label, must_include_tags=[], cannot_include_tags=[]) {
+        let tag_label = tag;
+        if (typeof tag === "object") tag_label = tag.label;
         const li = $('<li role="presentation"></li>');
-        const link = $('<a href="#" data-tag="' + tag + '">' + label + '</a>');
-        if (tag === '-shared-with-me') link.append($('<span class="badge repo-notifications" title="New Sharing Invites"></span>'));
-        else if (tag === '-all') link.addClass('repo-all-notebooks');
+        const link = $('<a href="#" data-tag="' + tag_label + '">' + label + '</a>');
+        if (tag.description) link.data("description", tag.description);
+        if (tag_label === '-shared-with-me') link.append($('<span class="badge repo-notifications" title="New Sharing Invites"></span>'));
+        else if (tag_label === '-all') link.addClass('repo-all-notebooks');
 
         // Attach the click event
         link.click(function() {
@@ -2016,6 +2020,10 @@ define([
 
         // Create the table
         const list_div = tab_node.find(".repository-list");
+
+        // Create the tag description
+        const description = tab_node.find("ul.repo-sidebar-nav").find("li.active > a").data("description");
+        if (description) $("<p></p>").addClass("repo-tag-description").html(description).appendTo(list_div);
 
         const table = $("<table></table>")
             .addClass("table table-striped table-bordered table-hover")

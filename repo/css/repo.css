@@ -131,6 +131,10 @@
     text-transform: capitalize;
 }
 
+.repo-tag-description {
+    margin: 0 0 9px;
+}
+
 #publish-quality {
     margin-left: 0;
 }
