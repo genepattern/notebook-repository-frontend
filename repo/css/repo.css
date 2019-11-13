@@ -126,7 +126,9 @@
     padding: 5px;
 }
 
-.repo-sidebar-nav > li, .repo-sidebar-shared > li {
+.repo-sidebar-nav > li,
+.repo-sidebar-workshop > li,
+.repo-sidebar-shared > li {
     width: 100%;
     text-transform: capitalize;
 }

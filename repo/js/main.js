@@ -1828,12 +1828,12 @@ define([
     /**
      * Builds the repository tab
      */
-    function build_repo_tab(tab, must_include_tags, cannot_include_tags) {
+    function build_repo_tab(tab, sidebar, full_sidebar, must_include_tags, cannot_include_tags) {
         // Add Notebook Sidebar
         const tab_node = $(`#${tab}`);
 
-        const pinned_tags = get_pinned_tags(tab, must_include_tags, cannot_include_tags);
-        const nav = tab_node.find(".repo-sidebar-nav");
+        const pinned_tags = get_pinned_tags($(sidebar).attr("title"), must_include_tags, cannot_include_tags);
+        const nav = tab_node.find(sidebar);
 
         // Remember which nav was selected
         const remembered = nav.parent().find("li.active").text();
@@ -1842,7 +1842,7 @@ define([
         nav.empty();
 
         // Add the all notebooks tag
-        nav.append(create_sidebar_nav(tab, '-all', 'all notebooks', must_include_tags, cannot_include_tags));
+        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-all', 'all notebooks', [], []));
 
         // For each pinned tag, add to the sidebar
         pinned_tags.forEach(function(tag) {
@@ -1851,15 +1851,10 @@ define([
         });
 
         // Add the prerelease tag
-        nav.append(create_sidebar_nav(tab, '-prerelease', 'prerelease', must_include_tags, cannot_include_tags));
+        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-prerelease', 'prerelease', must_include_tags, cannot_include_tags));
 
         // Add the My Notebooks tag
-        nav.append(create_sidebar_nav(tab, '-my-notebooks', 'my notebooks', must_include_tags, cannot_include_tags));
-
-        // Select the remembered nav, select first if not found
-        let to_select = nav.parent().find(`li:contains('${remembered}')`);
-        if (!to_select.length || !remembered) to_select = nav.find("li:first");
-        select_sidebar_nav(tab, to_select.find('a'), must_include_tags, cannot_include_tags);
+        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-my-notebooks', 'my notebooks', [], []));
     }
 
     function get_protected_tags() {
@@ -1885,10 +1880,10 @@ define([
         return protected_tags;
     }
 
-    function get_pinned_tags(tab_name, must_include_tags=[], cannot_include_tags=[]) {
+    function get_pinned_tags(collection, must_include_tags=[], cannot_include_tags=[]) {
         // If already cached, return the list
-        if (GenePattern.repo.pinned_tags && GenePattern.repo.pinned_tags[tab_name]) {
-            return GenePattern.repo.pinned_tags[tab_name];
+        if (GenePattern.repo.pinned_tags && GenePattern.repo.pinned_tags[collection]) {
+            return GenePattern.repo.pinned_tags[collection];
         }
 
         // Otherwise, generate the list
@@ -1926,7 +1921,7 @@ define([
 
         // Set the cache and return
         if (!GenePattern.repo.pinned_tags) GenePattern.repo.pinned_tags = {};
-        GenePattern.repo.pinned_tags[tab_name] = pinned_tags;
+        GenePattern.repo.pinned_tags[collection] = pinned_tags;
         return pinned_tags;
     }
 
@@ -2202,8 +2197,10 @@ define([
                 // If viewing the notebook index
                 if (Jupyter.notebook_list) {
                     empty_notebook_list(); // Empty the list of any existing state
-                    build_repo_tab('repository', [], ["workshop"]); // Populate the repository tab
-                    build_repo_tab('workshops', ["workshop"], []);
+                    const selected_tag = $('.repo-sidebar').find("li.active").text();
+                    build_repo_tab('repository', ".repo-sidebar-nav", true, [], ["workshop"]); // Populate the repository tab
+                    build_repo_tab('repository', ".repo-sidebar-workshop", false, ["workshop"], []);
+                    select_remembered_tag('repository', selected_tag);
                 }
 
                 GenePattern.repo.last_refresh = new Date(); // Set the time of last refresh
@@ -2213,6 +2210,20 @@ define([
                 console.log("ERROR: Could not obtain list of public notebooks");
             }
         });
+    }
+
+    function select_remembered_tag(tab, tag) {
+        // Get the remembered tag's li
+        const sidebar = $('.repo-sidebar');
+        let to_select = sidebar.find(`li:contains('${tag}')`);
+
+        // If no remembered tag or no li found, select the featured tag
+        if (!to_select.length || !tag) to_select = sidebar.find("li:contains('featured')");
+
+        // If featured wasn't found, select first li
+        if (!to_select.length) to_select = sidebar.find("li:first");
+
+        select_sidebar_nav(tab, to_select.find('a'));
     }
 
     /**
@@ -2368,7 +2379,9 @@ define([
                     .append(
                         $("<div class='repo-sidebar col-md-2'></div>")
                             .append($("<h4>Public Notebooks</h4>"))
-                            .append($("<ul class='repo-sidebar-nav nav nav-pills'></ul>"))
+                            .append($("<ul class='repo-sidebar-nav nav nav-pills' title='repository'></ul>"))
+                            .append($("<h4>Workshops</h4>"))
+                            .append($("<ul class='repo-sidebar-workshop nav nav-pills' title='workshops'></ul>"))
                             .append($("<h4>Shared Notebooks</h4>"))
                             .append($("<ul class='repo-sidebar-shared nav nav-pills'></ul>"))
                     )
@@ -2798,7 +2811,6 @@ define([
 
         // Initialize notebook library and workshop tabs
         init_repo_tab("repository", "Notebook Library");
-        init_repo_tab("workshops", "Workshop Notebooks");
 
         // Authenticate and the list of public notebooks
         do_authentication(function () {
