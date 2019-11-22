@@ -1980,8 +1980,11 @@ define([
         else {
             if (tag === '-all' || tag.endsWith('notebooks')) nb_header.hide();
             else nb_header.show();
-            const filtered_notebook_list = public_notebook_list(link.attr("data-tag"), must_include_tags, cannot_include_tags);
-            build_notebook_table(tab, filtered_notebook_list);
+            const filtered_notebook_list = public_notebook_list(link.attr("data-tag"), must_include_tags, ["workshop"]);
+            const filtered_workshop_list = public_notebook_list(link.attr("data-tag"), ["workshop"], cannot_include_tags);
+
+            build_notebook_table(tab, tag, filtered_notebook_list, false);
+            build_notebook_table(tab, tag, filtered_workshop_list, true);
         }
     }
 
@@ -2007,18 +2010,33 @@ define([
     /**
      * Build and attach a notebook DataTable to the Public Notebooks tab
      *
+     * @param tab
      * @param label
      * @param notebooks
+     * @param workshop
      */
-    function build_notebook_table(tab, notebooks) {
+    function build_notebook_table(tab, label, notebooks, workshop) {
         const tab_node = $(`#${tab}`);
 
         // Create the table
         const list_div = tab_node.find(".repository-list");
 
+        // Do not display workshop notebooks when empty
+        if (workshop && notebooks.length === 0) return;
+
+        // Do not display public notebooks when label is workshop
+        if (label === 'workshop' && !workshop) return;
+
+        // Add the header, if one is defined
+        if (workshop) {
+            if (label !== 'workshop') $("<hr/>").appendTo(list_div);
+            if (label !== 'workshop') $("<h4></h4>").text("Workshop Notebooks").appendTo(list_div);
+            $("<label></label>").text("Workshop notebooks are companion notebooks for GenePattern workshops, intended to teach concepts or new features.").appendTo(list_div);
+        }
+
         // Create the tag description
         const description = tab_node.find("ul.repo-sidebar-nav").find("li.active > a").data("description");
-        if (description) $("<p></p>").addClass("repo-tag-description").html(description).appendTo(list_div);
+        if (description && !workshop) $("<p></p>").addClass("repo-tag-description").html(description).appendTo(list_div);
 
         const table = $("<table></table>")
             .addClass("table table-striped table-bordered table-hover")
@@ -2198,8 +2216,7 @@ define([
                 if (Jupyter.notebook_list) {
                     empty_notebook_list(); // Empty the list of any existing state
                     const selected_tag = $('.repo-sidebar').find("li.active").text();
-                    build_repo_tab('repository', ".repo-sidebar-nav", true, [], ["workshop"]); // Populate the repository tab
-                    build_repo_tab('repository', ".repo-sidebar-workshop", false, ["workshop"], []);
+                    build_repo_tab('repository', ".repo-sidebar-nav", true, [], []); // Populate the repository tab
                     select_remembered_tag('repository', selected_tag);
                 }
 
@@ -2380,8 +2397,6 @@ define([
                         $("<div class='repo-sidebar col-md-2'></div>")
                             .append($("<h4>Public Notebooks</h4>"))
                             .append($("<ul class='repo-sidebar-nav nav nav-pills' title='repository'></ul>"))
-                            .append($("<h4>Workshops</h4>"))
-                            .append($("<ul class='repo-sidebar-workshop nav nav-pills' title='workshops'></ul>"))
                             .append($("<h4>Shared Notebooks</h4>"))
                             .append($("<ul class='repo-sidebar-shared nav nav-pills'></ul>"))
                     )
