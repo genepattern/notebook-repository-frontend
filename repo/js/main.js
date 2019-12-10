@@ -1842,10 +1842,11 @@ define([
         nav.empty();
 
         // Add the all notebooks tag
-        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-all', 'all notebooks', [], []));
+        if (full_sidebar) nav.append(create_sidebar_nav(tab, 'featured', 'featured', [], []));
 
         // For each pinned tag, add to the sidebar
         pinned_tags.forEach(function(tag) {
+            if (tag === 'featured') return; // Skip the featured tag, as it's handled as a special case above
             const tag_model = get_tag_model(tag);
             nav.append(create_sidebar_nav(tab, tag_model, tag, must_include_tags, cannot_include_tags));
         });
@@ -1853,8 +1854,14 @@ define([
         // Add the prerelease tag
         if (full_sidebar) nav.append(create_sidebar_nav(tab, '-prerelease', 'prerelease', must_include_tags, cannot_include_tags));
 
+        // Add the all notebooks tag
+        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-all', 'all notebooks', [], []));
+
         // Add the My Notebooks tag
-        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-my-notebooks', 'my notebooks', [], []));
+        if (full_sidebar) {
+            nav.append($("<h4 class='pull-left'>My Notebooks</h4>"));
+            nav.append(create_sidebar_nav(tab, '-my-notebooks', 'my notebooks', [], []));
+        }
     }
 
     function get_protected_tags() {
