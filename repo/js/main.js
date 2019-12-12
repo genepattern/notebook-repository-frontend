@@ -1858,10 +1858,7 @@ define([
         if (full_sidebar) nav.append(create_sidebar_nav(tab, '-all', 'all notebooks', [], []));
 
         // Add the My Notebooks tag
-        if (full_sidebar) {
-            nav.append($("<h4 class='pull-left'>My Notebooks</h4>"));
-            nav.append(create_sidebar_nav(tab, '-my-notebooks', 'my notebooks', [], []));
-        }
+        if (full_sidebar) nav.append(create_sidebar_nav(tab, '-my-notebooks', 'published by me', [], []));
     }
 
     function get_protected_tags() {
