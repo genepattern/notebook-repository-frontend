@@ -33,6 +33,49 @@ define([
     "use strict";
 
     /**
+     * Patch the DataTables search function with one that ignores special characters and accents
+     */
+    function init_table_search() {
+        const _div = document.createElement('div');
+        $.fn.dataTable.ext.type.search.html = function(data) {
+            _div.innerHTML = data;
+            return _div.textContent ?
+                _div.textContent
+                    .replace(/[&\/\\#,+()$~%.'":*?<>{}\-_!@=|^`;\[\]]/g, '')
+                    .replace(/[áÁàÀâÂäÄãÃåÅæÆ]/g, 'a')
+                    .replace(/[çÇ]/g, 'c')
+                    .replace(/[éÉèÈêÊëË]/g, 'e')
+                    .replace(/[íÍìÌîÎïÏîĩĨĬĭ]/g, 'i')
+                    .replace(/[ñÑ]/g, 'n')
+                    .replace(/[óÓòÒôÔöÖœŒ]/g, 'o')
+                    .replace(/[ß]/g, 's')
+                    .replace(/[úÚùÙûÛüÜ]/g, 'u')
+                    .replace(/[ýÝŷŶŸÿ]/g, 'n') :
+                _div.innerText
+                    .replace(/[&\/\\#,+()$~%.'":*?<>{}\-_!@=|^`;\[\]]/g, '')
+                    .replace(/[áÁàÀâÂäÄãÃåÅæÆ]/g, 'a')
+                    .replace(/[çÇ]/g, 'c')
+                    .replace(/[éÉèÈêÊëË]/g, 'e')
+                    .replace(/[íÍìÌîÎïÏîĩĨĬĭ]/g, 'i')
+                    .replace(/[ñÑ]/g, 'n')
+                    .replace(/[óÓòÒôÔöÖœŒ]/g, 'o')
+                    .replace(/[ß]/g, 's')
+                    .replace(/[úÚùÙûÛüÜ]/g, 'u')
+                    .replace(/[ýÝŷŶŸÿ]/g, 'n');
+        };
+    }
+
+    /**
+     * Strip special characters and return the altered string
+     *
+     * @param raw_string
+     * @returns {string}
+     */
+    function strip_special_characters(raw_string) {
+        return raw_string.replace(/[&\/\\#,+()$~%.'":*?<>{}\-_!@=|^`;\[\]]/g, '')
+    }
+
+    /**
      * Get the api path to the selected notebook
      *
      * @returns {string|null}
@@ -2418,7 +2461,7 @@ define([
                                                 // If all notebooks is not selected, select it
                                                 if (!is_all_nb_selected(id)) tab_node.find(".repo-all-notebooks").click();
 
-                                                const search_text = $(event.target).val();
+                                                const search_text = strip_special_characters($(event.target).val());
                                                 const filter_input = tab_node.find(".repository-list input[type=search]");
                                                 filter_input.val(search_text).keyup();
                                             })
@@ -2827,6 +2870,9 @@ define([
         // Add warning to move and rename dialogs
         $('.rename-button').click(() => add_move_warning(null));
         $('.move-button').click(() => add_move_warning(null));
+
+        // Init the data table search
+        init_table_search();
 
         // Initialize notebook library and workshop tabs
         init_repo_tab("repository", "Notebook Library");
