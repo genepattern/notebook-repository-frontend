@@ -1,5 +1,8 @@
 # notebook-repository-frontend
 
+> ### **DEPRECATED**
+> **This nbextension is no longer in use and has been superseded by the [notebook project functionality](https://github.com/genepattern/notebook-repository).**
+
 This nbextension is a companion to the GenePattern Notebook extension and the Notebook Repository web service.
 It provides a frontend to the provided Notebook Repository services.
 
